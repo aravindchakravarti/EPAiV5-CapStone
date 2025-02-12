@@ -3,7 +3,8 @@ import json
 import logging
 import inspect
 import importlib.util
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv, find_dotenv
 from typing import Union, get_type_hints
 import atexit
@@ -22,7 +23,7 @@ if not API_KEY:
     raise ValueError("Missing GOOGLE_API_KEY in environment variables.")
 
 # Configure GenAI
-genai.configure(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY)
 
 # # Function to cleanly shut down the API
 # def shutdown_grpc():
@@ -100,9 +101,17 @@ def get_completion(system_prompt: str, user_prompt: str, model: str = "gemini-2.
         str: The AI-generated response.
     """
     try:
-        model_instance = genai.GenerativeModel(model)
-        full_prompt = f"{system_prompt}\n\n{user_prompt}"
-        response = model_instance.generate_content(full_prompt)
+        response = client.models.generate_content(
+            model=model,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt, 
+                temperature=0),
+            contents=user_prompt
+        )
+
+        # model_instance = genai.GenerativeModel(model)
+        # full_prompt = f"{system_prompt}\n\n{user_prompt}"
+        # response = model_instance.generate_content(full_prompt)
 
         if not response or not hasattr(response, "text"):
             raise ValueError("Invalid response format from API.")
