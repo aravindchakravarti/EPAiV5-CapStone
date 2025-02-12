@@ -181,7 +181,68 @@ def select_and_execute_function(user_input: str):
         logging.error(f"Execution error: {e}")
         return "Error: Something went wrong while executing the function."
 
-# Example usage
-user_query = "I have 4 apples and my friend gave me 3 more. Howw many apples do I have now?"
-result = select_and_execute_function(user_query)
+def iterative_function_execution(user_input: str, max_iterations: int = 4) -> str:
+    """Loops through function calls until LLM decides it's done."""
+    conversation_state = []  # Stores function calls & results
+
+    for iteration in range(max_iterations):
+        # Create a system prompt with conversation memory
+        function_metadata = extract_function_metadata()
+        system_prompt = f"""You are an AI that selects the best function(s) based on user input.
+        
+        Available functions:
+        {function_metadata}
+
+        You have access to previous function calls:
+        {json.dumps(conversation_state)}
+
+        Use previous results to decide the next function call. If a final answer is reached, return:
+        {{"function": "DONE", "args": []}}
+
+        Return JSON in the following format but do not include ```json or any markdown formatting in your response:
+        {{"function": "function_name", "args": [arg1, arg2]}}
+        
+        """
+
+        # Send request to Gemini API
+        llm_response = get_completion(system_prompt, user_input)
+
+        try:
+            response_data = json.loads(llm_response)
+            func_name = response_data["function"]
+            args = response_data["args"]
+
+            if func_name == "DONE":
+                return conversation_state[-1]["result"] if conversation_state else "No valid output."
+
+            if func_name in function_registry:
+                logging.info(f"Calling function: {func_name} with args: {args}")
+                func = function_registry[func_name]
+
+                if validate_args(func, args):
+                    result = func(*args)
+                    conversation_state.append({"function": func_name, "args": args, "result": result})
+                else:
+                    return "Error: Invalid arguments provided."
+            else:
+                return f"Error: Function {func_name} not found."
+
+        except json.JSONDecodeError:
+            logging.error(f"Failed to parse LLM response: {llm_response}")
+            return "Error: Could not understand the response from AI."
+        except Exception as e:
+            logging.error(f"Execution error: {e}")
+            return "Error: Something went wrong while executing the function."
+
+    logging.warning("Max iterations reached. Stopping execution.")
+    return "Error: Maximum iterations reached."
+
+# # Example usage
+# user_query = "I have 4 apples and my friend gave me 3 more. Howw many apples do I have now?"
+# result = select_and_execute_function(user_query)
+# print(f"Result: {result}")
+
+# user_query = "I have 4 apples and my friend gave me 3 more later my father ate 2. How many apples do I have now?"
+user_query = "I had four apples, my friend ate 3. How may apples do I have now?"
+result = iterative_function_execution(user_query)
 print(f"Result: {result}")
