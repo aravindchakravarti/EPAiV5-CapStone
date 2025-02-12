@@ -7,6 +7,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv, find_dotenv
 from typing import Union, get_type_hints
 import atexit
+import gradio as gr
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -32,6 +33,10 @@ genai.configure(api_key=API_KEY)
 
 # Function registry (automatically populated)
 function_registry = {}
+
+# def gradio_interface(user_input):
+#     """Wrapper function for Gradio to call AI agent."""
+#     return iterative_function_execution(user_input)
 
 def load_functions_from_directory(directory: str):
     """
@@ -139,67 +144,98 @@ def validate_args(func, args):
         logging.error(f"Error validating arguments: {e}")
         return False
 
-def select_and_execute_function(user_input: str):
-    """
-    Determines the appropriate function based on user input, retrieves arguments, validates them, and executes the function.
+# def select_and_execute_function(user_input: str):
+#     """
+#     Determines the appropriate function based on user input, retrieves arguments, validates them, and executes the function.
 
-    Args:
-        user_input (str): The user's request.
+#     Args:
+#         user_input (str): The user's request.
 
-    Returns:
-        The function result or an error message.
-    """
-    function_metadata = extract_function_metadata()
+#     Returns:
+#         The function result or an error message.
+#     """
+#     function_metadata = extract_function_metadata()
 
-    system_prompt = f"""You are an AI that selects the most appropriate function based on user input.
-    Available functions:\n\n{function_metadata}
+#     system_prompt = f"""You are an AI that selects the most appropriate function based on user input.
+#     Available functions:\n\n{function_metadata}
     
-    Return JSON in the following format but do not include ```json or any markdown formatting in your reesponse:
-    {{"function": "function_name", "args": [arg1, arg2]}}"""
+#     Return JSON in the following format but do not include ```json or any markdown formatting in your reesponse:
+#     {{"function": "function_name", "args": [arg1, arg2]}}"""
 
-    llm_response = get_completion(system_prompt, user_input)
+#     llm_response = get_completion(system_prompt, user_input)
 
-    try:
-        response_data = json.loads(llm_response)
-        func_name = response_data["function"]
-        args = response_data["args"]
+#     try:
+#         response_data = json.loads(llm_response)
+#         func_name = response_data["function"]
+#         args = response_data["args"]
 
-        if func_name in function_registry:
-            func = function_registry[func_name]
+#         if func_name in function_registry:
+#             func = function_registry[func_name]
 
-            # Validate arguments before execution
-            if validate_args(func, args):
-                return func(*args)
-            else:
-                return "Error: Invalid arguments provided."
-        else:
-            raise ValueError(f"Function {func_name} not found.")
-    except json.JSONDecodeError:
-        logging.error(f"Failed to parse LLM response: {llm_response}")
-        return "Error: Could not understand the response from AI."
-    except Exception as e:
-        logging.error(f"Execution error: {e}")
-        return "Error: Something went wrong while executing the function."
+#             # Validate arguments before execution
+#             if validate_args(func, args):
+#                 return func(*args)
+#             else:
+#                 return "Error: Invalid arguments provided."
+#         else:
+#             raise ValueError(f"Function {func_name} not found.")
+#     except json.JSONDecodeError:
+#         logging.error(f"Failed to parse LLM response: {llm_response}")
+#         return "Error: Could not understand the response from AI."
+#     except Exception as e:
+#         logging.error(f"Execution error: {e}")
+#         return "Error: Something went wrong while executing the function."
 
 def iterative_function_execution(user_input: str, max_iterations: int = 4) -> str:
     """Loops through function calls until LLM decides it's done."""
+
+    # Few-shot examples to improve multi-step reasoning
+    few_shot_examples = """
+    Example 1:
+    User: "I had 5 chocolates. My friend gave me 2 more, but later I ate 3. How many do I have now?"
+    AI Thought Process:
+    - First, use ai_add_two_numbers(5, 2) -> 7
+    - Then, use ai_sub_two_numbers(7, 3) -> 4
+    - Answer is 4.
+
+    Example 2:
+    User: ""I had 10 apples. I gave 2 to my friend and 3 to my sister. How many do I have left?"
+    AI thought process:
+    - First, use ai_sub_two_numbers(10, 2) -> 8
+    - Then, use ai_sub_two_numbers(8, 3) -> 5
+    - Answer is 5.
+
+    Example 3:
+    User: "I saved 100 dollars, then spent 20 on food and 10 on transport. How much do I have left?"
+    AI Thought Process:
+    - First, use ai_sub_two_numbers(100, 20) -> 80
+    - Then, use ai_sub_two_numbers(80, 10) -> 70
+    - Answer is 70.
+    """
+
     conversation_state = []  # Stores function calls & results
 
     for iteration in range(max_iterations):
+        logging.info(f"Iteration {iteration + 1}")
         # Create a system prompt with conversation memory
         function_metadata = extract_function_metadata()
-        system_prompt = f"""You are an AI that selects the best function(s) based on user input.
+        system_prompt = f"""You are an AI agent that selects the best function(s) based on user input.
         
-        Available functions:
+        Available functions are listed below select one at a time:
         {function_metadata}
 
-        You have access to previous function calls:
+        Here are some examples of how to use the functions based on user inputs:
+        {few_shot_examples}
+
+        You have access to previous function calls which you made, this will help you in deciding which functoin to call next. \
+        Use previous results to decide the next function call.
         {json.dumps(conversation_state)}
 
-        Use previous results to decide the next function call. If a final answer is reached, return:
+        
+        If the final answer is reached, return in following format but do not include ```json or any markdown formatting in your response:
         {{"function": "DONE", "args": []}}
 
-        Return JSON in the following format but do not include ```json or any markdown formatting in your response:
+        Else return JSON in the following format but do not include ```json or any markdown formatting in your response:
         {{"function": "function_name", "args": [arg1, arg2]}}
         
         """
@@ -237,12 +273,23 @@ def iterative_function_execution(user_input: str, max_iterations: int = 4) -> st
     logging.warning("Max iterations reached. Stopping execution.")
     return "Error: Maximum iterations reached."
 
-# # Example usage
-# user_query = "I have 4 apples and my friend gave me 3 more. Howw many apples do I have now?"
-# result = select_and_execute_function(user_query)
-# print(f"Result: {result}")
 
-# user_query = "I have 4 apples and my friend gave me 3 more later my father ate 2. How many apples do I have now?"
-user_query = "I had four apples, my friend ate 3. How may apples do I have now?"
+# # Create the Gradio UI
+# gr.Interface(
+#     fn=gradio_interface,
+#     inputs=gr.Textbox(label="Enter your query"),
+#     outputs=gr.Textbox(label="AI Response"),
+#     title="AI Function Executor",
+#     description="This AI selects and executes functions based on user input.",
+#     live=True
+# ).launch()
+# Example usage
+user_query = "I have 4 apples and my friend gave me 3 more. I ate 2 apples out of it. Later my another friend gifted me 10 apples!. How many apples do I have now?"
+# I have 4 apples and my friend gave me 3 more. I ate 2 apples out of it. Later my another friend gifted me 10 apples!. How many apples do I have now?
 result = iterative_function_execution(user_query)
 print(f"Result: {result}")
+
+# # user_query = "I have 4 apples and my friend gave me 3 more later my father ate 2. How many apples do I have now?"
+# user_query = "I had four apples, my friend ate 3. How may apples do I have now?"
+# result = iterative_function_execution(user_query)
+# print(f"Result: {result}")
