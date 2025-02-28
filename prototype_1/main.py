@@ -293,7 +293,7 @@ def iterative_function_execution(user_input: str, max_iterations: int = 4) -> st
 #     live=True
 # ).launch()
 # Example usage
-user_query = "I have 4 apples and my friend gave me 3 more. I ate 2 apples out of it. Later my another friend gifted me 10 apples!. How many apples do I have now?"
+user_query = "I have 4 apples and my friend gave me 3 more. How many apples do I have now?"
 # I have 4 apples and my friend gave me 3 more. I ate 2 apples out of it. Later my another friend gifted me 10 apples!. How many apples do I have now?
 result = iterative_function_execution(user_query)
 print(f"Result: {result}")
