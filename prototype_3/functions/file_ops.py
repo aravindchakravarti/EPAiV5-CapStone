@@ -22,7 +22,11 @@ FILE_TYPE_MAPPINGS = {
     'codes': {'py', 'ipynb'}
 }
 
-def ai_get_file_list(path: str) -> List[str]:
+file_list = []
+unique_file_types = set()
+folder_paths = {}
+
+def ai_get_file_list(path: str) -> None:
     """
     Returns a list of files in a directory and its subdirectories.
     
@@ -41,13 +45,12 @@ def ai_get_file_list(path: str) -> List[str]:
         if not os.path.exists(path):
             raise FileNotFoundError(f"Directory not found: {path}")
         
-        file_list = []
         for root, _, files in os.walk(path):
             for file in files:
                 file_list.append(os.path.join(root, file))
         
         logging.info(f"Found {len(file_list)} files in {path}")
-        return file_list
+        return None
     
     except PermissionError as e:
         logging.error(f"Permission denied accessing {path}: {str(e)}")
@@ -56,7 +59,7 @@ def ai_get_file_list(path: str) -> List[str]:
         logging.error(f"Error scanning directory {path}: {str(e)}")
         raise
 
-def ai_get_unique_file_types(file_list: List[str]) -> Set[str]:
+def ai_get_unique_file_types() -> None:
     """
     Extracts unique file extensions from a list of file paths.
 
@@ -66,7 +69,6 @@ def ai_get_unique_file_types(file_list: List[str]) -> Set[str]:
     Returns:
         Set[str]: Set of unique file extensions (lowercase).
     """
-    unique_file_types = set()
     for file in file_list:
         # Handle files without extensions
         if '.' in file:
@@ -74,7 +76,7 @@ def ai_get_unique_file_types(file_list: List[str]) -> Set[str]:
             unique_file_types.add(file_type)
     
     logging.info(f"Found {len(unique_file_types)} unique file types: {unique_file_types}")
-    return unique_file_types
+    return None
 
 def remove_readonly(func, path, _):
     """
@@ -92,7 +94,7 @@ def remove_readonly(func, path, _):
         logging.error(f"Failed to remove read-only file/directory {path}: {str(e)}")
         raise
 
-def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict[str, str]:
+def ai_create_folders(base_path: str = ".") -> None:
     """
     Creates organized folders based on file types and returns their paths.
     
@@ -106,7 +108,6 @@ def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict
     Raises:
         PermissionError: If there are insufficient permissions to create directories
     """
-    folder_paths = {}
     
     try:
         # Create base path if it doesn't exist
@@ -127,7 +128,7 @@ def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict
             folder_paths[folder] = folder_path
             logging.info(f"Created folder: {folder_path}")
         
-        return folder_paths
+        return None
     
     except PermissionError as e:
         logging.error(f"Permission denied creating folders in {base_path}: {str(e)}")
@@ -136,7 +137,7 @@ def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict
         logging.error(f"Error creating folders: {str(e)}")
         raise
 
-def ai_move_files_to_folder(source_folder: str, folder_paths: Dict[str, str]) -> None:
+def ai_move_files_to_folder(source_folder: str) -> None:
     """
     Moves files from source folder to their respective organized folders.
     
@@ -188,9 +189,9 @@ def organize_files(source_path: str, base_path: str = ".") -> None:
     """
     try:
         files_list = ai_get_file_list(source_path)
-        unique_file_types = ai_get_unique_file_types(files_list)
-        folder_paths = ai_create_folders(unique_file_types, base_path)
-        ai_move_files_to_folder(source_path, folder_paths)
+        unique_file_types = ai_get_unique_file_types()
+        folder_paths = ai_create_folders(base_path)
+        ai_move_files_to_folder(source_path)
         logging.info("File organization completed successfully")
     
     except Exception as e:
