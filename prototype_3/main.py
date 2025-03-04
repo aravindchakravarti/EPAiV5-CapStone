@@ -9,6 +9,7 @@ from dotenv import load_dotenv, find_dotenv
 import re
 import ast
 from typing import List, Dict, Any, Callable, Optional, Tuple
+from functions.text_file_read import ai_read_file
 
 # Load environment variables
 load_dotenv(find_dotenv())
@@ -344,13 +345,20 @@ def run_agent(user_task: str, functions_dir: str = "functions") -> Dict[str, Any
     # Create system prompt for LLM1 (Task Decomposer)
     llm1_system_prompt = f"""We are building an AI agent with two LLMs.  
 You are the first LLM, responsible for breaking down complex tasks into smaller subtasks.  
-Your outputs will be processed by the second LLM, which will execute the subtasks.  
+Your outputs will be processed by the second LLM, which will execute the subtasks. 
 
 The second LLM will have access to:  
 1. Your outputs  
 2. The following Python functions:  
 
 {function_metadata}
+
+optionally, If use prompt suggests to read the todo.txt file, then here is the content of todo.txt
+
+{ai_read_file("todo.txt")}. 
+
+You are going to provide sub tasks for instructions in this file as well.
+However, if user prompt, doesn't suggest to read todo.txt file, then you going to ignore content of todo.txt file.
 
 ### Instructions for You:
 - Break down the task in a way that allows the second LLM to identify and call the necessary functions.  
@@ -361,6 +369,8 @@ The second LLM will have access to:
     - Identify unique file types
     - Create organized folders based on the identified unique file types within the <folder name> directory.
     - Compress all images in "images" directory if directory exists
+- In each of your predictions, if required, do not just say "source folder", but always \
+    say "source_path=<<<folder name>>>" or "destination_path='<<<folder name>>>'".
 
 Your focus is on structuring the task effectively, ensuring smooth execution by the second LLM.  
 """
@@ -373,104 +383,106 @@ Your focus is on structuring the task effectively, ensuring smooth execution by 
     for i, subtask in enumerate(subtasks, start=1):
         logging.info(f"{i}. {subtask}")
 
-    logging.info("\n\n ****************** LLM2 RESPONSE BEGINS ************************ \n\n")
-    # Create system prompt for LLM2 (Task Executor)
-    llm2_system_prompt = f"""We are building an AI agent with two LLMs. The first LLM \
-has received a task from user and it sub-divided the complex task into smaller \
-sub-tasks. You are the second LLM in an AI agent system, responsible for executing subtasks. \
-You have access to the following Python functions that can be called to complete tasks:
-{function_metadata}
+    if True:
+        logging.info("\n\n ****************** LLM2 RESPONSE BEGINS ************************ \n\n")
+        # Create system prompt for LLM2 (Task Executor)
+        llm2_system_prompt = f"""We are building an AI agent with two LLMs. The first LLM \
+    has received a task from user and it sub-divided the complex task into smaller \
+    sub-tasks. You are the second LLM in an AI agent system, responsible for executing subtasks. \
+    You have access to the following Python functions that can be called to complete tasks:
+    {function_metadata}
 
-### Instructions for You:
-1. Analyze the subtask provided to you.
-2. Identify the most appropriate function to execute for this subtask.
-3. Format your response as a single function call with appropriate arguments.
-4. Use ONLY functions that exist in the provided list. Do not invent new functions.
+    ### Instructions for You:
+    1. Analyze the subtask provided to you.
+    2. Identify the most appropriate function to execute for this subtask.
+    3. Format your response as a single function call with appropriate arguments.
+    4. Use ONLY functions that exist in the provided list. Do not invent new functions.
 
-I will always use below names for returned values for correspding functions. This will help you\
-in determining the params for next function call.
+    I will always use below names for returned values for correspding functions. This will help you\
+    in determining the params for next function call.
 
-<<<
-files_list = ai_get_file_list(source_path)
-unique_file_types = ai_get_unique_file_types(files_list)
-folder_paths = ai_create_folders(unique_file_types, base_path)
-ai_move_files_to_folder(source_path, folder_paths)
->>>
+    <<<
+    files_list = ai_get_file_list(source_path)
+    unique_file_types = ai_get_unique_file_types(files_list)
+    folder_paths = ai_create_folders(unique_file_types, base_path)
+    ai_move_files_to_folder(source_path, folder_paths)
+    >>>
 
-Example Response Format:
-<<<
-user_input : Retrieve list of all files within the 'un_organized' folder
-response : ai_get_file_list(path='un_organized')
+    Example Response Format:
+    <<<
+    user_input : Retrieve list of all files within the 'un_organized' folder
+    response : ai_get_file_list(path='un_organized')
 
-user_input : Create organized folders based on the identified unique file types within the 'un_organized' directory
-response : ai_create_organized_folders(unique_file_types=unique_file_types, base_path='un_organized')
+    user_input : Create organized folders based on the identified unique file types within the 'un_organized' directory
+    response : ai_create_organized_folders(unique_file_types=unique_file_types, base_path='un_organized')
 
->>>
+    >>>
 
 
 
-Your response should contain ONLY the function call, nothing else.
-"""
+    Your response should contain ONLY the function call, nothing else.
+    """
 
-    # Execute each subtask using LLM2
-    results = {
-        "task": user_task,
-        "subtasks": [],
-        "success": True,
-        "error": None
-    }
-
-    for i, subtask in enumerate(subtasks):
-        subtask_result = {
-            "id": i + 1,
-            "description": subtask,
-            "function_call": None,
-            "success": False,
-            "result": None,
+        # Execute each subtask using LLM2
+        results = {
+            "task": user_task,
+            "subtasks": [],
+            "success": True,
             "error": None
         }
 
-        try:
-            # Get function call from LLM2
-            llm2_response = get_llm2_completion(llm2_system_prompt, f"Subtask: {subtask}")
+        for i, subtask in enumerate(subtasks):
+            subtask_result = {
+                "id": i + 1,
+                "description": subtask,
+                "function_call": None,
+                "success": False,
+                "result": None,
+                "error": None
+            }
 
-            logging.info(f"LLM2 response for subtask {i}: {llm2_response}")
+            try:
+                # Get function call from LLM2
+                llm2_response = get_llm2_completion(llm2_system_prompt, f"Subtask: {subtask}")
 
-            # Clean the response
-            clean_response = llm2_response.strip()
-            if clean_response.startswith("```") and clean_response.endswith("```"):
-                clean_response = clean_response[3:-3].strip()
-            logging.info(f"LLM2 cleaned response: {clean_response}")
+                logging.info(f"LLM2 response for subtask {i}: {llm2_response}")
 
-            # Parse the function call
-            func_name, args = parse_function_call(clean_response)
+                # Clean the response
+                clean_response = llm2_response.strip()
+                if clean_response.startswith("```") and clean_response.endswith("```"):
+                    clean_response = clean_response[3:-3].strip()
+                logging.info(f"LLM2 cleaned response: {clean_response}")
+
+                # Parse the function call
+                func_name, args = parse_function_call(clean_response)
+                
+                if not func_name:
+                    raise ValueError(f"Could not parse function call: {clean_response}")
+                
+                logging.info(f"Parsed function name: {func_name}, args: {args}")
+
+                # Execute the function
+                func_result = execute_function(func_name, args)
+                
+                subtask_result["success"] = True
+                subtask_result["result"] = str(func_result)
+
+            except Exception as e:
+                subtask_result["success"] = False
+                subtask_result["error"] = str(e)
+                results["success"] = False
+                if not results["error"]:
+                    results["error"] = f"Error in subtask {i+1}: {str(e)}"
             
-            if not func_name:
-                raise ValueError(f"Could not parse function call: {clean_response}")
+            results["subtasks"].append(subtask_result)
+            logging.info("\n------------------------------------------")
             
-            logging.info(f"Parsed function name: {func_name}, args: {args}")
-
-            # Execute the function
-            func_result = execute_function(func_name, args)
-            
-            subtask_result["success"] = True
-            subtask_result["result"] = str(func_result)
-
-        except Exception as e:
-            subtask_result["success"] = False
-            subtask_result["error"] = str(e)
-            results["success"] = False
-            if not results["error"]:
-                results["error"] = f"Error in subtask {i+1}: {str(e)}"
-        
-        results["subtasks"].append(subtask_result)
-        logging.info("\n------------------------------------------")
-        
-    return results
+        return results
 
 
 if __name__ == "__main__":
-    task = "Please organize the folder named 'un_organized'"
+    task = """ Please organize the folder named 'un_organized'. It has mix of different file types """
+
     result = run_agent(task)
 
     # Print results in a readable format
@@ -501,3 +513,14 @@ def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict
 def ai_move_files_to_folder(source_folder: str, folder_paths: Dict[str, str]) -> None:
 
 """
+
+'''
+I want you to do two tasks. \
+    First task is to, read the todo.txt file in base folder path, i.e., './' which \
+    contains list of task to be accomplished. Please complete them. \
+    Second task is to Please organize the folder named 'un_organized' 
+'''
+
+'''
+Please organize the folder named 'un_organized'. It has mix of different file types
+'''
