@@ -1,5 +1,4 @@
 # EPAiV5-CapStone
-CapStone project
 
 Submitted by: Aravind D. Chakravarti
 Email ID: aravinddcsadguru@gmail.com
@@ -7,23 +6,47 @@ Email ID: aravinddcsadguru@gmail.com
 
 # AI-Powered File Organization Agent
 
-An intelligent file organization system that uses AI agents to automatically organize files in a directory based on their types. The system employs a two-LLM (Large Language Model) architecture to break down complex tasks and execute them efficiently.
+An intelligent file organization system that uses a dual-LLM (Large Language Model) architecture to automatically organize files in a directory based on their types. The system employs Google's Gemini AI to break down complex tasks and execute them efficiently.
+
+## Project Overview
+
+This project is part of EPAiV5-CapStone, developed by Aravind D. Chakravarti (aravinddcsadguru@gmail.com).
 
 ## Features
 
-- **Smart Task Decomposition**: Uses AI to break down complex file organization tasks into manageable subtasks
-- **Automatic File Categorization**: Organizes files into predefined categories:
-  - Images (jpg, jpeg, png, gif, bmp, svg, ico)
-  - Documents (txt, doc, docx, pdf, ppt, pptx, xls, xlsx, csv)
-  - Code Files (py, ipynb)
-- **Robust Error Handling**: Includes comprehensive error handling and logging
-- **Read-Only File Support**: Handles read-only files during deletion operations
-- **Logging System**: Detailed logging of all operations for debugging and monitoring
+### Core Functionality
+- **Dual LLM Architecture**:
+  - LLM1: Task decomposition and planning
+  - LLM2: Task execution and function calling
+- **Smart Task Processing**:
+  - Automatic task breakdown into manageable subtasks
+  - Intelligent function selection and execution
+  - Support for both direct commands and todo.txt file processing
+
+### File Organization
+- **Automatic File Categorization** into predefined types:
+  - Images: jpg, jpeg, png, gif, bmp, svg, ico
+  - Documents: txt, doc, docx, pdf, ppt, pptx, xls, xlsx, csv
+  - Code Files: py, ipynb
+
+### System Features
+- **Comprehensive Error Handling**:
+  - File permission management
+  - Read-only file handling
+  - Directory existence verification
+- **Detailed Logging System**:
+  - Operation timestamps
+  - Success/failure tracking
+  - Error tracing
+- **Flexible Configuration**:
+  - Customizable file type mappings
+  - Extensible function registry
+  - Environment-based configuration
 
 ## Prerequisites
 
 - Python 3.12 or higher
-- Google API Key for Gemini AI
+- Google Gemini AI API Key
 - Required Python packages:
   ```
   google-generativeai
@@ -34,8 +57,8 @@ An intelligent file organization system that uses AI agents to automatically org
 
 1. Clone the repository:
    ```bash
-   git clone <your-repository-url>
-   cd <repository-name>
+   git clone https://github.com/aravindchakravarti/EPAiV5-CapStone.git
+   cd EPAiV5-CapStone
    ```
 
 2. Install required packages:
@@ -43,66 +66,94 @@ An intelligent file organization system that uses AI agents to automatically org
    pip install -r requirements.txt
    ```
 
-3. Create a `.env` file in the root directory and add your Google API key:
-   ```
-   GOOGLE_API_KEY=your_api_key_here
+3. Configure environment:
+   ```bash
+   # Create .env file
+   echo "GOOGLE_API_KEY=your_api_key_here" > .env
    ```
 
 ## Project Structure
-├── main.py # Main agent implementation
-├── functions/
-│ └── file_ops.py # File operations functions
-├── .env # Environment variables
-└── requirements.txt # Project dependencies
+   ```
+
+EPAiV5-CapStone/ 
+├── main.py # Main agent implementation with LLM logic 
+├── functions/ 
+│ └── file_ops.py # File organization operations 
+| └── email_services.py # Email services
+| └── text_file_read.py # Text related  operations
+├── .env # Environment configuration 
+├── requirements.txt # Project dependencies 
+└── README.md # Project documentation
 
 ## Usage
 
-1. Basic usage:
-   ```python
-   from main import run_agent
-   
-   # Organize files in the 'un_organized' folder
-   result = run_agent("Please organize the folder named 'un_organized'")
-   ```
+## Usage
 
-2. The agent will:
-   - Scan the specified directory
-   - Identify file types
-   - Create appropriate folders
-   - Move files to their respective categories
+### Basic Usage
 
-## How It Works
+```python
+from main import run_agent
 
-1. **Task Decomposition (LLM1)**:
-   - Receives the user's task
-   - Breaks it down into smaller, manageable subtasks
-   - Outputs a structured list of operations
+# Simple file organization
+result = run_agent("Please organize the folder named 'un_organized'")
 
-2. **Task Execution (LLM2)**:
-   - Receives each subtask
-   - Identifies appropriate functions to execute
-   - Executes the functions with correct parameters
+# Process tasks from todo.txt
+result = run_agent("Process the tasks in todo.txt")
+```
 
-3. **File Operations**:
-   - Scans directories recursively
-   - Creates organized folder structure
-   - Moves files to appropriate categories
-   - Handles read-only files and permissions
+### Advanced Usage
+
+```python
+# Custom directory organization
+result = run_agent("Organize files in 'custom_directory' with specific categories")
+
+# Check execution results
+if result["success"]:
+    print("Organization completed successfully")
+    for subtask in result["subtasks"]:
+        print(f"Subtask {subtask['id']}: {subtask['description']}")
+        print(f"Result: {subtask['result']}")
+else:
+    print(f"Error: {result['error']}")
+```
+
+## Architecture
+
+### LLM1 (Task Decomposer)
+- Receives user tasks
+- Analyzes requirements
+- Breaks down into subtasks
+- Formats output for LLM2
+
+### LLM2 (Task Executor)
+- Processes individual subtasks
+- Maps tasks to functions
+- Executes operations
+- Handles errors and logging
+
+### File Operations
+- Directory scanning
+- File type identification
+- Folder creation
+- File movement and organization
 
 ## Error Handling
 
-The system includes comprehensive error handling for:
-- File not found errors
-- Permission issues
+The system handles various error scenarios:
+- FileNotFoundError
+- PermissionError
 - Read-only file conflicts
-- Invalid file operations
+- Invalid function calls
+- LLM response parsing errors
 
 ## Logging
 
-All operations are logged with timestamps and severity levels:
-- INFO: Regular operations
-- ERROR: Operation failures
-- WARNING: Potential issues
+Comprehensive logging system includes:
+- Function entry/exit logs
+- Operation success/failure
+- Error tracing
+- LLM responses
+- Task decomposition details
 
 ## License
 
@@ -110,5 +161,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Acknowledgments
 
-- Google Gemini AI for providing the LLM capabilities
-- Python community for the various libraries used in this project
+- Google Gemini AI for LLM capabilities
+- Python community for essential libraries
+- EPAi5 program for project guidance
