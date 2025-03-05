@@ -4,44 +4,73 @@ Submitted by: Aravind D. Chakravarti
 Email ID: aravinddcsadguru@gmail.com
 
 
-# AI-Powered File Organization Agent
+# AI Agent for File Organization!
 
-An intelligent file organization system that uses a dual-LLM (Large Language Model) architecture to automatically organize files in a directory based on their types. The system employs Google's Gemini AI to break down complex tasks and execute them efficiently.
+An intelligent file organization system that leverages Google's Gemini AI to automatically organize files and execute complex tasks. The system employs a sophisticated dual-LLM architecture with a real-time web interface for task execution and monitoring.
 
 ## Project Overview
 
-This project is part of EPAiV5-CapStone, developed by Aravind D. Chakravarti (aravinddcsadguru@gmail.com).
+It is an AI agent which demonstrates how a complex task can be divided into sub-tasks and executed. Project flow is as described below. 
 
-## Features
+![Project Flow](.\support_docs\flow.png "Project Flow")
 
-### Core Functionality
-- **Dual LLM Architecture**:
-  - LLM1: Task decomposition and planning
-  - LLM2: Task execution and function calling
-- **Smart Task Processing**:
-  - Automatic task breakdown into manageable subtasks
-  - Intelligent function selection and execution
-  - Support for both direct commands and todo.txt file processing
+## Core Features
+
+### AI Architecture
+- **Dual LLM System**:
+  - **LLM1 (Task Decomposer)**: Breaks down complex tasks into manageable subtasks
+  - **LLM2 (Task Executor)**: Converts subtasks into precise function calls
+- **Google Gemini AI Integration**:
+  - Uses `gemini-2.0-flash` model
+  - Zero-temperature responses for deterministic behavior
+  - Structured prompt engineering for reliable outputs
 
 ### File Organization
-- **Automatic File Categorization** into predefined types:
+- **Intelligent File Categorization**:
   - Images: jpg, jpeg, png, gif, bmp, svg, ico
   - Documents: txt, doc, docx, pdf, ppt, pptx, xls, xlsx, csv
   - Code Files: py, ipynb
-
-### System Features
-- **Comprehensive Error Handling**:
-  - File permission management
+- **Dynamic Directory Management**:
+  - Automatic folder creation based on file types
+  - Smart file type detection and sorting
   - Read-only file handling
-  - Directory existence verification
-- **Detailed Logging System**:
-  - Operation timestamps
-  - Success/failure tracking
-  - Error tracing
-- **Flexible Configuration**:
-  - Customizable file type mappings
-  - Extensible function registry
-  - Environment-based configuration
+
+### Web Interface
+- **Real-time Task Monitoring**:
+  - Live execution logs
+  - Progress tracking
+  - Task status updates
+- **User-friendly Interface**:
+  - Simple task input
+  - Detailed execution feedback
+  - Error reporting
+
+## Technical Architecture
+
+### Core Components
+
+1. **Main Agent (`main.py`)**:
+   - Task orchestration
+   - Function registry management
+   - Result aggregation and reporting
+
+2. **LLM Operations (`LLM_ops.py`)**:
+   - Google Gemini AI integration
+   - Prompt management
+   - Response processing
+   - Error handling
+
+3. **Function Operations (`function_ops.py`)**:
+   - Dynamic function loading
+   - Argument parsing
+   - Function execution
+   - Type safety
+
+4. **Web Interface (`gradio_interface.py`)**:
+   - Gradio-based UI
+   - Real-time logging
+   - Thread-safe execution
+   - Queue-based log management
 
 ## Prerequisites
 
@@ -51,6 +80,7 @@ This project is part of EPAiV5-CapStone, developed by Aravind D. Chakravarti (ar
   ```
   google-generativeai
   python-dotenv
+  gradio
   ```
 
 ## Installation
@@ -77,45 +107,18 @@ This project is part of EPAiV5-CapStone, developed by Aravind D. Chakravarti (ar
 
 EPAiV5-CapStone/ 
 ├── main.py # Main agent implementation with LLM logic 
+├── LLM_ops.py # LLM operations and prompt management
+├── function_ops.py # Function registry and execution
+├── gradio_interface.py # Web interface and logging
 ├── functions/ 
 │ └── file_ops.py # File organization operations 
 | └── email_services.py # Email services
 | └── text_file_read.py # Text related  operations
+| └── file_compression.py # Image related operations
 ├── .env # Environment configuration 
 ├── requirements.txt # Project dependencies 
 └── README.md # Project documentation
-
-## Usage
-
-## Usage
-
-### Basic Usage
-
-```python
-from main import run_agent
-
-# Simple file organization
-result = run_agent("Please organize the folder named 'un_organized'")
-
-# Process tasks from todo.txt
-result = run_agent("Process the tasks in todo.txt")
-```
-
-### Advanced Usage
-
-```python
-# Custom directory organization
-result = run_agent("Organize files in 'custom_directory' with specific categories")
-
-# Check execution results
-if result["success"]:
-    print("Organization completed successfully")
-    for subtask in result["subtasks"]:
-        print(f"Subtask {subtask['id']}: {subtask['description']}")
-        print(f"Result: {subtask['result']}")
-else:
-    print(f"Error: {result['error']}")
-```
+  ```
 
 ## Architecture
 
@@ -136,6 +139,44 @@ else:
 - File type identification
 - Folder creation
 - File movement and organization
+
+### Addtional Features
+- **Flexible Function Registry**: Automatically loads and manages available functions
+- **Type-Safe Execution**: Validates and converts function arguments to appropriate types
+
+## Usage
+
+### Web Interface
+
+1. Start the Gradio interface:
+   ```python
+   python gradio_interface.py
+   ```
+
+2. Access the interface at `http://localhost:7860`
+
+3. Enter your task in the input box and click "Run Agent"
+
+### Programmatic Usage
+
+```python
+from main import run_agent
+
+# Simple file organization
+result = run_agent("Please organize the folder named 'un_organized'")
+
+# Process tasks from todo.txt
+result = run_agent("Read and execute tasks from todo.txt")
+
+# Check execution results
+if result["success"]:
+    print("Task completed successfully")
+    for subtask in result["subtasks"]:
+        print(f"Subtask {subtask['id']}: {subtask['description']}")
+        print(f"Result: {subtask['result']}")
+else:
+    print(f"Error: {result['error']}")
+```
 
 ## Error Handling
 
