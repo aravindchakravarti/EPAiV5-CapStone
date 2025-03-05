@@ -1,9 +1,9 @@
 import os
 import smtplib
+import pytz
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-
 
 def ai_send_email(subject: str, body: str)-> None:
     """
@@ -52,18 +52,19 @@ def ai_send_email(subject: str, body: str)-> None:
         print(f"Error: {e}")  # Print error message if sending fails
 
 
-def ai_send_calendar_invite(subject: str, body: str, start_time: str, end_time: str):
+def ai_send_calendar_invite(subject: str, body: str, start_time: str, end_time: str, timezone: str):
     """
-    Sends a calendar invite (ICS file) via email.
+    Sends a calendar invite (ICS file) via email with proper time zone handling.
 
     Parameters:
         subject (str): The subject of the calendar event.
         body (str): The description of the event.
-        start_time (str): Event start time in `YYYYMMDDTHHMMSSZ` format (UTC).
-        end_time (str): Event end time in `YYYYMMDDTHHMMSSZ` format (UTC).
+        start_time (str): Event start time in `YYYY-MM-DD HH:MM:SS` format (local time).
+        end_time (str): Event end time in `YYYY-MM-DD HH:MM:SS` format (local time).
+        timezone (str): The time zone of the event (e.g., "Asia/Kolkata", "America/New_York").
 
     Raises:
-        ValueError: If EMAIL_PASSWORD is not set.
+        ValueError: If EMAIL_PASSWORD is not set or invalid timezone.
         Exception: If email sending fails.
     """
 
@@ -76,15 +77,31 @@ def ai_send_calendar_invite(subject: str, body: str, start_time: str, end_time: 
 
     to_email = EMAIL_ADDRESS  # Sending to self
 
+    # Convert local time to UTC
+    try:
+        local_tz = pytz.timezone(timezone)  # Get the time zone object
+    except pytz.UnknownTimeZoneError:
+        raise ValueError(f"Invalid time zone: {timezone}")
+
+    def convert_to_utc(dt_str):
+        """Converts a datetime string from local time to UTC in iCalendar format (YYYYMMDDTHHMMSSZ)."""
+        local_time = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")  # Parse input string
+        local_time = local_tz.localize(local_time)  # Assign local timezone
+        utc_time = local_time.astimezone(pytz.utc)  # Convert to UTC
+        return utc_time.strftime("%Y%m%dT%H%M%SZ")  # Return iCalendar format
+
+    start_time_utc = convert_to_utc(start_time)
+    end_time_utc = convert_to_utc(end_time)
+
     # Create calendar invite (.ics file content)
     ics_content = f"""BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//AI Invite//Example//EN
 BEGIN:VEVENT
 UID:1234567890@example.com
-DTSTAMP:{start_time}
-DTSTART:{start_time}
-DTEND:{end_time}
+DTSTAMP:{start_time_utc}
+DTSTART:{start_time_utc}
+DTEND:{end_time_utc}
 SUMMARY:{subject}
 DESCRIPTION:{body}
 LOCATION:Online
@@ -117,11 +134,13 @@ END:VCALENDAR
     except Exception as e:
         print(f"Error: {e}")
 
+
 if __name__ == "__main__":
-    # Example: Sending an invite
+    # Example usage: Sending an invite in IST (Indian Standard Time)
     subject = "Project Meeting"
     body = "Join us for a project discussion."
-    start_time = "20250310T100000Z"  # Format: YYYYMMDDTHHMMSSZ (UTC)
-    end_time = "20250310T110000Z"    # One hour meeting
+    start_time = "2025-03-10 15:00:00"  # Local time in IST
+    end_time = "2025-03-10 16:00:00"    # One-hour meeting
+    timezone = "Asia/Kolkata"  # Specify the time zone
 
-    ai_send_calendar_invite(subject, body, start_time, end_time)
+    ai_send_calendar_invite(subject, body, start_time, end_time, timezone)

@@ -398,16 +398,6 @@ Your focus is on structuring the task effectively, ensuring smooth execution by 
     3. Format your response as a single function call with appropriate arguments.
     4. Use ONLY functions that exist in the provided list. Do not invent new functions.
 
-    I will always use below names for returned values for correspding functions. This will help you\
-    in determining the params for next function call.
-
-    <<<
-    files_list = ai_get_file_list(source_path)
-    unique_file_types = ai_get_unique_file_types(files_list)
-    folder_paths = ai_create_folders(unique_file_types, base_path)
-    ai_move_files_to_folder(source_path, folder_paths)
-    >>>
-
     Example Response Format:
     <<<
     user_input : Retrieve list of all files within the 'un_organized' folder
@@ -418,9 +408,7 @@ Your focus is on structuring the task effectively, ensuring smooth execution by 
 
     >>>
 
-
-
-    Your response should contain ONLY the function call, nothing else.
+    Your response should contain ONLY the function call, nothing else. Do not include any formatting like ``` or toolcode etc.
     """
 
         # Execute each subtask using LLM2
@@ -481,7 +469,12 @@ Your focus is on structuring the task effectively, ensuring smooth execution by 
 
 
 if __name__ == "__main__":
-    task = """ Please organize the folder named 'un_organized'. It has mix of different file types  """
+    task = """ I want you to do three tasks. \
+    First task is to, read the todo.txt file in base folder path, i.e., './' which \
+    contains list of task to be accomplished. Please complete them. \
+    Second task is to Please organize the folder named 'un_organized' 
+    Third task is to compress all the images in 'un_organized' directory.
+    """
 
     result = run_agent(task)
 
@@ -497,14 +490,16 @@ if __name__ == "__main__":
     for subtask in result["subtasks"]:
         status = "✓" if subtask["success"] else "✗"
         print(f"\n{subtask['id']}. {subtask['description']} {status}")
-        print(f"   Function call: {subtask['function_call']}")
+        #print(f"   Function call: {subtask['function_call']}")
         
-        if subtask["success"]:
-            print(f"   Result: {subtask['result']}")
-        else:
-            print(f"   Error: {subtask['error']}")
+        #if subtask["success"]:
+        #    print(f"   Result: {subtask['result']}")
+        #else:
+        #    print(f"   Error: {subtask['error']}")
             
     print("\n===================================")
+
+""" ==================================== PROMPTS ==================================== """
 
 """
 def ai_get_file_list(path: str) -> List[str]:
@@ -514,6 +509,15 @@ def ai_move_files_to_folder(source_folder: str, folder_paths: Dict[str, str]) ->
 
 """
 
+
+'''
+Please organize the folder named 'un_organized'. It has mix of different file types
+'''
+
+'''
+read the todo.txt file in base folder path, i.e., './' which contains list of task to be accomplished
+'''
+
 '''
 I want you to do two tasks. \
     First task is to, read the todo.txt file in base folder path, i.e., './' which \
@@ -522,5 +526,21 @@ I want you to do two tasks. \
 '''
 
 '''
-Please organize the folder named 'un_organized'. It has mix of different file types
+I want you to do three tasks. \
+    First task is to, read the todo.txt file in base folder path, i.e., './' which \
+    contains list of task to be accomplished. Please complete them. \
+    Second task is to Please organize the folder named 'un_organized' 
+    Third task is to compress all the images in 'un_organized' directory.
+'''
+
+'''
+I will always use below names for returned values for correspding functions. This will help you\
+    in determining the params for next function call.
+
+    <<<
+    files_list = ai_get_file_list(source_path)
+    unique_file_types = ai_get_unique_file_types(files_list)
+    folder_paths = ai_create_folders(unique_file_types, base_path)
+    ai_move_files_to_folder(source_path, folder_paths)
+    >>>
 '''

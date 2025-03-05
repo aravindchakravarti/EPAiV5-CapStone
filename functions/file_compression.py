@@ -42,28 +42,24 @@ def compress_image(image_path, output_path, quality=80) -> None:
                 print(f"Failed to compress {image_path}: {data}")
         else:
             print(f"Error {response.status_code} while processing {image_path}")
-
     except Exception as e:
         print(f"An error occurred while compressing {image_path}: {e}")
 
 def ai_compress_images_in_folder(folder_path: str) -> None:
     """
-    Compress all images in the specified folder.
+    Recursively compress all images in the specified folder and subdirectories.
 
     Parameters:
         folder_path (str): Path to the folder containing images to be compressed.
     """
-    # Iterate over all files in the specified folder
-    for filename in os.listdir(folder_path):
-        file_path = os.path.join(folder_path, filename)  # Get full file path
-        ext = os.path.splitext(filename)[-1].lower()  # Extract file extension
-        
-        # Check if the file is a valid image format
-        if os.path.isfile(file_path) and ext in VALID_EXTENSIONS:
-            output_file = os.path.join(folder_path, 'compressed_' + filename)
+    for root, _, files in os.walk(folder_path):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            ext = os.path.splitext(filename)[-1].lower()
             
-            # Compress the image and save the output
-            compress_image(file_path, output_file)
+            if ext in VALID_EXTENSIONS:
+                output_file = os.path.join(root, 'compressed_' + filename)
+                compress_image(file_path, output_file)
 
 if __name__ == "__main__":
     # Specify the folder containing images and start compression
