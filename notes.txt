@@ -1,0 +1,44 @@
+""" ==================================== PROMPTS ==================================== """
+
+'''
+Please organize the folder named 'un_organized'. It has mix of different file types
+'''
+
+'''
+Read the todo.txt file in base folder path, i.e., './' which contains list of task to be accomplished
+'''
+
+'''
+I want you to do two tasks. \
+    First task is to, read the todo.txt file in base folder path, i.e., './' which \
+    contains list of task to be accomplished. Please complete them. \
+    Second task is to Please organize the folder named 'un_organized' 
+'''
+
+'''
+I want you to do three tasks. \
+    First task is to, read the todo.txt file in base folder path, i.e., './' which \
+    contains list of task to be accomplished. Please complete them. \
+    Second task is to Please organize the folder named 'un_organized' 
+    Third task is to compress all the images in 'un_organized' directory.
+'''
+
+'''
+I will always use below names for returned values for correspding functions. This will help you\
+    in determining the params for next function call.
+
+    <<<
+    files_list = ai_get_file_list(source_path)
+    unique_file_types = ai_get_unique_file_types(files_list)
+    folder_paths = ai_create_folders(unique_file_types, base_path)
+    ai_move_files_to_folder(source_path, folder_paths)
+    >>>
+'''
+
+"""
+def ai_get_file_list(path: str) -> List[str]:
+def ai_get_unique_file_types(file_list: List[str]) -> Set[str]:
+def ai_create_folders(unique_file_types: Set[str], base_path: str = ".") -> Dict[str, str]:
+def ai_move_files_to_folder(source_folder: str, folder_paths: Dict[str, str]) -> None:
+
+"""
