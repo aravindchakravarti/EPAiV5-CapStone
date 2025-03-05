@@ -8,7 +8,7 @@ from LLM_ops import *
 load_dotenv(find_dotenv())
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 def run_agent(user_task: str, functions_dir: str = "functions") -> Dict[str, Any]:
     """

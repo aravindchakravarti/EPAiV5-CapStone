@@ -13,7 +13,7 @@ from pathlib import Path
 import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Define file type mappings
 FILE_TYPE_MAPPINGS = {

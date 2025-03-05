@@ -4,6 +4,7 @@ import pytz
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import logging
 
 def ai_send_email(subject: str, body: str)-> None:
     """
@@ -47,9 +48,9 @@ def ai_send_email(subject: str, body: str)-> None:
             server.starttls()  # Secure the connection
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)  # Authenticate with SMTP server
             server.sendmail(EMAIL_ADDRESS, to_email, msg.as_string())  # Send email
-        print("Email sent successfully!")
+        logging.info("Email sent successfully!")
     except Exception as e:
-        print(f"Error: {e}")  # Print error message if sending fails
+        logging.info(f"Error: {e}")  # Print error message if sending fails
 
 
 def ai_send_calendar_invite(subject: str, body: str, start_time: str, end_time: str, timezone: str):
@@ -130,9 +131,9 @@ END:VCALENDAR
             server.starttls()
             server.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
             server.sendmail(EMAIL_ADDRESS, to_email, msg.as_string())
-        print("Calendar invite sent successfully!")
+        logging.info("Calendar invite sent successfully!")
     except Exception as e:
-        print(f"Error: {e}")
+        logging.info(f"Error: {e}")
 
 
 if __name__ == "__main__":

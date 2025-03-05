@@ -1,5 +1,6 @@
 import os
 import requests
+import logging
 
 # Supported image formats for compression
 VALID_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff"}
@@ -37,13 +38,13 @@ def compress_image(image_path, output_path, quality=80) -> None:
                 img_data = requests.get(data["dest"]).content
                 with open(output_path, "wb") as out_file:
                     out_file.write(img_data)
-                print(f"Compressed: {image_path} -> {output_path}")
+                logging.info(f"Compressed: {image_path} -> {output_path}")
             else:
-                print(f"Failed to compress {image_path}: {data}")
+                logging.info(f"Failed to compress {image_path}: {data}")
         else:
-            print(f"Error {response.status_code} while processing {image_path}")
+            logging.info(f"Error {response.status_code} while processing {image_path}")
     except Exception as e:
-        print(f"An error occurred while compressing {image_path}: {e}")
+        logging.info(f"An error occurred while compressing {image_path}: {e}")
 
 def ai_compress_images_in_folder(folder_path: str) -> None:
     """
