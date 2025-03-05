@@ -12,7 +12,7 @@ An intelligent file organization system that leverages Google's Gemini AI to aut
 
 It is an AI agent which demonstrates how a complex task can be divided into sub-tasks and executed. Project flow is as described below. 
 
-![Project Flow](.\support_docs\flow.png "Project Flow")
+![Project Flow](support_docs\flow.png "Project Flow")
 
 ## Core Features
 
